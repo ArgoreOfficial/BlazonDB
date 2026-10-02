@@ -110,14 +110,14 @@ static Tag makeTag( const std::string& _tagName, const std::vector<std::string>&
 	return tag;
 }
 
-static const bool doesTagsMatch( const Tag& _a, const Tag& _b )
+static const bool doesTagsMatch( const Tag& _entry, const Tag& _query )
 {
 	// check tag index
-	if ( _a.index != _b.index )
+	if ( _entry.index != _query.index )
 		return false;
 
 	// check modifiers
-	if ( ( _a.modifiersMask & _b.modifiersMask ) != _a.modifiersMask )
+	if ( ( _entry.modifiersMask & _query.modifiersMask ) != _query.modifiersMask )
 		return false;
 
 	// check tinctures, this only fails if two hashes of the same depth are different

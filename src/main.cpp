@@ -41,10 +41,10 @@ struct BlazonIndexCard
 		{
 			for ( const auto& cardTag : tags )
 			{
-				if ( searchTag.index != cardTag.index ) // not the same tag
+				if ( cardTag.index != searchTag.index ) // not the same tag
 					continue;
 
-				if ( !doesTagsMatch( searchTag, cardTag ) )
+				if ( !doesTagsMatch( cardTag, searchTag ) )
 					return false;
 
 				break; // tags match, continue to next
