@@ -10,80 +10,8 @@
  */
 
 #include <stdio.h>
-#include <string>
-#include <vector>
-#include <bitset>
 
 #include <Blazon.h>
-
-namespace blazon {
-
-struct BlazonIndexCard
-{
-	BlazonIndexCard() = default;
-	BlazonIndexCard( size_t _entryIndex, const std::vector<Tag>& _tags ) {
-		entryIndex = _entryIndex;
-		tags = _tags;
-
-		for ( const Tag& tag : _tags )
-			tagIndexMask.set( tag.index, true );
-	}
-
-	bool matchesTags( const std::vector<Tag>& _tags ) const
-	{
-		for ( const auto& tag : _tags )
-		{
-			if ( !tagIndexMask.test( tag.index ) )
-				return false;
-		}
-
-		for ( const auto& searchTag : _tags )
-		{
-			for ( const auto& cardTag : tags )
-			{
-				if ( cardTag.index != searchTag.index ) // not the same tag
-					continue;
-
-				if ( !doesTagsMatch( cardTag, searchTag ) )
-					return false;
-
-				break; // tags match, continue to next
-			}
-		}
-
-		return true;
-	}
-
-	size_t entryIndex;
-	std::vector<Tag> tags;
-	std::bitset<128> tagIndexMask;
-};
-
-struct IndexContainer
-{
-	std::vector<BlazonIndexCard> indexCards;
-
-	void addIndexCard( size_t _entryIndex, const std::vector<Tag>& _tags )
-	{
-		indexCards.push_back( { _entryIndex, _tags } );
-	}
-
-	std::vector<size_t> query( const std::vector<Tag>& _searchTags )
-	{
-		std::vector<size_t> results;
-
-		for ( const BlazonIndexCard& card : indexCards )
-		{
-			if ( card.matchesTags( _searchTags ) )
-				results.push_back( card.entryIndex );
-		}
-
-		return results;
-	}
-};
-
-}
-
 
 static void queryAndPrintResults( std::vector<blazon::BlazonEntry>& _entries, blazon::IndexContainer& _indexContainer, const std::string& _search )
 {
