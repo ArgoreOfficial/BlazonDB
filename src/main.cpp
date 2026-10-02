@@ -29,7 +29,7 @@ struct BlazonIndexCard
 			tagIndexMask.set( tag.index, true );
 	}
 
-	bool matchesTags( const std::vector<Tag> _tags ) const
+	bool matchesTags( const std::vector<Tag>& _tags ) const
 	{
 		for ( const auto& tag : _tags )
 		{
@@ -44,13 +44,13 @@ struct BlazonIndexCard
 				if ( searchTag.index != cardTag.index ) // not the same tag
 					continue;
 
-				if ( ( searchTag.modifiersMask & cardTag.modifiersMask ) != searchTag.modifiersMask )
-					return false; // modifiers did not match, skip out early
+				if ( !doesTagsMatch( searchTag, cardTag ) )
+					return false;
 
-				break; // skip to next search tag
+				break; // tags match, continue to next
 			}
 		}
-		
+
 		return true;
 	}
 
