@@ -7,6 +7,7 @@
 namespace blazon {
 
 typedef std::bitset<128> TagIndexBitset;
+typedef std::bitset<128> ModifierBitset;
 
 const std::vector<std::string> CONST_TAGS{
 	"field",
@@ -29,26 +30,20 @@ const std::vector<std::string> CONST_TINCTURES{
 	"proper"
 };
 
-struct BlazonEntry
-{
-	size_t index;
-	std::string blazon;
-};
-
 struct Tag
 {
 	std::string debugString = "";
 
 	size_t index{ 0 };
-	std::bitset<128> modifiersMask{ 0 };
+	ModifierBitset modifiersMask{ 0 };
 	std::vector<uint32_t> tinctureHashes;
 };
 
-struct BlazonIndexCard
+struct BlazonEntry
 {
-	BlazonIndexCard() = default;
-	BlazonIndexCard( size_t _entryIndex, const std::vector<Tag>& _tags ) {
-		entryIndex = _entryIndex;
+	BlazonEntry() = default;
+	BlazonEntry( const std::string& _blazon, const std::vector<Tag>& _tags ) {
+		blazon = _blazon;
 		tags = _tags;
 
 		for ( const Tag& tag : _tags )
@@ -57,16 +52,16 @@ struct BlazonIndexCard
 
 	bool matchesTags( const std::vector<Tag>& _tags ) const;
 
-	size_t entryIndex;
+	std::string blazon;
 	std::vector<Tag> tags;
 	TagIndexBitset tagIndexMask;
 };
 
-struct IndexContainer
+struct BlazonDatabase
 {
-	std::vector<BlazonIndexCard> indexCards;
+	std::vector<BlazonEntry> entries;
 
-	void addIndexCard( size_t _entryIndex, const std::vector<Tag>& _tags );
+	void addIndexCard( const std::string& _blazon, const std::vector<Tag>& _tags );
 	std::vector<size_t> query( const std::vector<Tag>& _searchTags );
 
 };

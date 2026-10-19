@@ -5,7 +5,7 @@
 
 #include "hash.h"
 
-bool blazon::BlazonIndexCard::matchesTags( const std::vector<Tag>& _tags ) const
+bool blazon::BlazonEntry::matchesTags( const std::vector<Tag>& _tags ) const
 {
 	for ( const auto& tag : _tags )
 	{
@@ -30,19 +30,20 @@ bool blazon::BlazonIndexCard::matchesTags( const std::vector<Tag>& _tags ) const
 	return true;
 }
 
-void blazon::IndexContainer::addIndexCard( size_t _entryIndex, const std::vector<Tag>& _tags )
+void blazon::BlazonDatabase::addIndexCard( const std::string& _blazon, const std::vector<Tag>& _tags )
 {
-	indexCards.push_back( { _entryIndex, _tags } );
+	entries.push_back( { _blazon, _tags } );
 }
 
-std::vector<size_t> blazon::IndexContainer::query( const std::vector<Tag>& _searchTags )
+std::vector<size_t> blazon::BlazonDatabase::query( const std::vector<Tag>& _searchTags )
 {
 	std::vector<size_t> results;
 
-	for ( const BlazonIndexCard& card : indexCards )
+	for ( size_t i = 0; i < entries.size(); i++ )
 	{
+		const BlazonEntry& card = entries[ i ];
 		if ( card.matchesTags( _searchTags ) )
-			results.push_back( card.entryIndex );
+			results.push_back( i );
 	}
 
 	return results;
