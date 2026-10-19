@@ -5,12 +5,15 @@
 
 #include "hash.h"
 
-bool blazon::BlazonEntry::matchesTags( const std::vector<Tag>& _tags ) const
+bool blazon::BlazonEntry::matchesTags( const std::vector<Tag>& _tags, bool _skipBitset ) const
 {
-	for ( const auto& tag : _tags )
+	if ( !_skipBitset )
 	{
-		if ( !tagIndexMask.test( tag.index ) )
-			return false;
+		for ( const auto& tag : _tags )
+		{
+			if ( !tagIndexMask.test( tag.index ) )
+				return false;
+		}
 	}
 
 	for ( const auto& searchTag : _tags )
@@ -30,14 +33,18 @@ bool blazon::BlazonEntry::matchesTags( const std::vector<Tag>& _tags ) const
 	return true;
 }
 
-void blazon::BlazonDatabase::addIndexCard( const std::string& _blazon, const std::vector<Tag>& _tags )
+void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::vector<Tag>& _tags )
 {
-	entries.push_back( { _blazon, _tags } );
+	BlazonEntry entry{ _blazon, _tags };
+	tagIndices.push_back( entry.tagIndexMask );
+	entries.push_back( std::move( entry ) );
 }
 
-void blazon::BlazonDatabase::addIndexCard( const std::string& _blazon, const std::string& _tags )
+void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::string& _tags )
 {
-	entries.push_back( { _blazon, blazon::makeTagListFromString( _tags ) } );
+	BlazonEntry entry{ _blazon, blazon::makeTagListFromString( _tags ) };
+	tagIndices.push_back( entry.tagIndexMask );
+	entries.push_back( std::move( entry ) );
 }
 
 std::vector<size_t> blazon::BlazonDatabase::query( const std::vector<Tag>& _searchTags )
@@ -54,6 +61,29 @@ std::vector<size_t> blazon::BlazonDatabase::query( const std::vector<Tag>& _sear
 	return results;
 }
 
+std::vector<size_t> blazon::BlazonDatabase::queryIndices( const std::vector<Tag>& _searchTags )
+{
+	TagIndexBitset queryBitset = makeBitsetFromTags( _searchTags );
+	std::vector<size_t> presearchEntries{};
+	std::vector<size_t> results{};
+
+	for ( size_t i = 0; i < tagIndices.size(); i++ )
+	{
+		if ( ( queryBitset & tagIndices[ i ] ) == queryBitset )
+			presearchEntries.push_back( i );
+	}
+
+	for ( size_t i = 0; i < presearchEntries.size(); i++ )
+	{
+		size_t entriesIndex = presearchEntries[ i ];
+
+		const BlazonEntry& card = entries[ entriesIndex ];
+		if ( card.matchesTags( _searchTags ) )
+			results.push_back( entriesIndex );
+	}
+	
+	return results;
+}
 bool blazon::isModifierTincture( const std::string& _modifier )
 {
 	for ( const auto& t : CONST_TINCTURES )
@@ -141,6 +171,14 @@ blazon::Tag blazon::makeTagFromString( const std::string& _string )
 	Tag tag = makeTag( tagString, modifiers );
 	tag.debugString = _string;
 	return tag;
+}
+
+blazon::TagIndexBitset blazon::makeBitsetFromTags( const std::vector<Tag>& _tags )
+{
+	TagIndexBitset bitset{};
+	for ( const Tag& tag : _tags )
+		bitset.set( tag.index, true );
+	return bitset;
 }
 
 std::vector<blazon::Tag> blazon::makeTagListFromString( const std::string& _string )

@@ -12,10 +12,11 @@
 #include <stdio.h>
 
 #include <Blazon.h>
+#include <nlohmann/json.hpp>
 
 static void queryAndPrintResults( blazon::BlazonDatabase& _indexContainer, const std::string& _search )
 {
-	std::vector<size_t> results = _indexContainer.query( blazon::makeTagListFromString( _search ) );
+	std::vector<size_t> results = _indexContainer.queryIndices( blazon::makeTagListFromString( _search ) );
 	printf( "Search results for: [%s]\n", _search.c_str() );
 	
 	for ( size_t r : results )
@@ -26,11 +27,11 @@ static void queryAndPrintResults( blazon::BlazonDatabase& _indexContainer, const
 int main()
 {
 	blazon::BlazonDatabase indexContainer{};
-	indexContainer.addIndexCard( "azure, a lion rampant or",     "field:azure,lion:or:rampant" );
-	indexContainer.addIndexCard( "azure, a lion rampant argent", "field:azure,lion:argent:rampant" );
-	indexContainer.addIndexCard( "azure, a lion argent",         "field:azure,lion:argent" );
-	indexContainer.addIndexCard( "gules, two bends or",          "field:gules,bends:or" );
-	indexContainer.addIndexCard( "party per fess gules and or",  "per_fess:gules:or" );
+	indexContainer.addEntry( "azure, a lion rampant or",     "field:azure,lion:or:rampant" );
+	indexContainer.addEntry( "azure, a lion rampant argent", "field:azure,lion:argent:rampant" );
+	indexContainer.addEntry( "azure, a lion argent",         "field:azure,lion:argent" );
+	indexContainer.addEntry( "gules, two bends or",          "field:gules,bends:or" );
+	indexContainer.addEntry( "party per fess gules and or",  "per_fess:gules:or" );
 
 	queryAndPrintResults( indexContainer, "field:azure,lion" );
 	queryAndPrintResults( indexContainer, "field:azure,lion:argent" );
@@ -44,5 +45,7 @@ int main()
 	queryAndPrintResults( indexContainer, "per_fess:or" );
 	queryAndPrintResults( indexContainer, "per_fess:or:gules" );
 	
+
+
 	return 0;
 }
