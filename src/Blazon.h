@@ -62,6 +62,7 @@ struct BlazonDatabase
 	std::vector<BlazonEntry> entries;
 
 	void addIndexCard( const std::string& _blazon, const std::vector<Tag>& _tags );
+	void addIndexCard( const std::string& _blazon, const std::string& _tags );
 	std::vector<size_t> query( const std::vector<Tag>& _searchTags );
 
 };

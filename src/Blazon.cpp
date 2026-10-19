@@ -35,6 +35,11 @@ void blazon::BlazonDatabase::addIndexCard( const std::string& _blazon, const std
 	entries.push_back( { _blazon, _tags } );
 }
 
+void blazon::BlazonDatabase::addIndexCard( const std::string& _blazon, const std::string& _tags )
+{
+	entries.push_back( { _blazon, blazon::makeTagListFromString( _tags ) } );
+}
+
 std::vector<size_t> blazon::BlazonDatabase::query( const std::vector<Tag>& _searchTags )
 {
 	std::vector<size_t> results;

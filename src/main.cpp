@@ -26,11 +26,11 @@ static void queryAndPrintResults( blazon::BlazonDatabase& _indexContainer, const
 int main()
 {
 	blazon::BlazonDatabase indexContainer{};
-	indexContainer.addIndexCard( "azure, a lion rampant or",     blazon::makeTagListFromString( "field:azure,lion:or:rampant" ) );
-	indexContainer.addIndexCard( "azure, a lion rampant argent", blazon::makeTagListFromString( "field:azure,lion:argent:rampant" ) );
-	indexContainer.addIndexCard( "azure, a lion argent",         blazon::makeTagListFromString( "field:azure,lion:argent" ) );
-	indexContainer.addIndexCard( "gules, two bends or",          blazon::makeTagListFromString( "field:gules,bends:or" ) );
-	indexContainer.addIndexCard( "party per fess gules and or",  blazon::makeTagListFromString( "per_fess:gules:or" ) );
+	indexContainer.addIndexCard( "azure, a lion rampant or",     "field:azure,lion:or:rampant" );
+	indexContainer.addIndexCard( "azure, a lion rampant argent", "field:azure,lion:argent:rampant" );
+	indexContainer.addIndexCard( "azure, a lion argent",         "field:azure,lion:argent" );
+	indexContainer.addIndexCard( "gules, two bends or",          "field:gules,bends:or" );
+	indexContainer.addIndexCard( "party per fess gules and or",  "per_fess:gules:or" );
 
 	queryAndPrintResults( indexContainer, "field:azure,lion" );
 	queryAndPrintResults( indexContainer, "field:azure,lion:argent" );
