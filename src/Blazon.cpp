@@ -11,7 +11,7 @@ bool blazon::BlazonEntry::matchesTags( const std::vector<Tag>& _tags, bool _skip
 	{
 		for ( const auto& tag : _tags )
 		{
-			if ( !tagIndexMask.test( tag.index ) )
+			if ( !tagBitset.test( tag.index ) )
 				return false;
 		}
 	}
@@ -36,14 +36,14 @@ bool blazon::BlazonEntry::matchesTags( const std::vector<Tag>& _tags, bool _skip
 void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::vector<Tag>& _tags )
 {
 	BlazonEntry entry{ _blazon, _tags };
-	tagIndices.push_back( entry.tagIndexMask );
+	tagIndices.push_back( entry.tagBitset );
 	entries.push_back( std::move( entry ) );
 }
 
 void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::string& _tags )
 {
 	BlazonEntry entry{ _blazon, blazon::makeTagListFromString( _tags ) };
-	tagIndices.push_back( entry.tagIndexMask );
+	tagIndices.push_back( entry.tagBitset );
 	entries.push_back( std::move( entry ) );
 }
 
@@ -63,7 +63,7 @@ std::vector<size_t> blazon::BlazonDatabase::query( const std::vector<Tag>& _sear
 
 std::vector<size_t> blazon::BlazonDatabase::queryIndices( const std::vector<Tag>& _searchTags )
 {
-	TagIndexBitset queryBitset = makeBitsetFromTags( _searchTags );
+	TagBitset queryBitset = makeBitsetFromTags( _searchTags );
 	std::vector<size_t> presearchEntries{};
 	std::vector<size_t> results{};
 
@@ -72,7 +72,7 @@ std::vector<size_t> blazon::BlazonDatabase::queryIndices( const std::vector<Tag>
 		if ( ( queryBitset & tagIndices[ i ] ) == queryBitset )
 			presearchEntries.push_back( i );
 	}
-
+	
 	for ( size_t i = 0; i < presearchEntries.size(); i++ )
 	{
 		size_t entriesIndex = presearchEntries[ i ];
@@ -136,7 +136,7 @@ blazon::Tag blazon::makeTag( const std::string& _tagName, const std::vector<std:
 			size_t index = getModifierIndex( modifierName );
 
 			if ( index != (size_t)-1 ) // nonexistent modifiers are ignored
-				tag.modifiersMask.set( index, true );
+				tag.modifiersBitset.set( index, true );
 		}
 	}
 
@@ -169,13 +169,12 @@ blazon::Tag blazon::makeTagFromString( const std::string& _string )
 		modifiers.push_back( tempSegment );
 
 	Tag tag = makeTag( tagString, modifiers );
-	tag.debugString = _string;
 	return tag;
 }
 
-blazon::TagIndexBitset blazon::makeBitsetFromTags( const std::vector<Tag>& _tags )
+blazon::TagBitset blazon::makeBitsetFromTags( const std::vector<Tag>& _tags )
 {
-	TagIndexBitset bitset{};
+	TagBitset bitset{};
 	for ( const Tag& tag : _tags )
 		bitset.set( tag.index, true );
 	return bitset;
@@ -204,7 +203,7 @@ const bool blazon::doesTagsMatch( const Tag& _entry, const Tag& _query )
 		return false;
 
 	// check modifiers
-	if ( ( _entry.modifiersMask & _query.modifiersMask ) != _query.modifiersMask )
+	if ( ( _entry.modifiersBitset & _query.modifiersBitset ) != _query.modifiersBitset )
 		return false;
 
 	// check tinctures, this only fails if two hashes of the same depth are different

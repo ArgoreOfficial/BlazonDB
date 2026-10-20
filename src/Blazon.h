@@ -1,12 +1,13 @@
 ﻿#pragma once
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <bitset>
 
 namespace blazon {
 
-typedef std::bitset<128> TagIndexBitset;
+typedef std::bitset<128> TagBitset;
 typedef std::bitset<128> ModifierBitset;
 
 const std::vector<std::string> CONST_TAGS{
@@ -32,10 +33,8 @@ const std::vector<std::string> CONST_TINCTURES{
 
 struct Tag
 {
-	std::string debugString = "";
-
 	size_t index{ 0 };
-	ModifierBitset modifiersMask{ 0 };
+	ModifierBitset modifiersBitset{ 0 };
 	std::vector<uint32_t> tinctureHashes;
 };
 
@@ -47,20 +46,25 @@ struct BlazonEntry
 		tags = _tags;
 
 		for ( const Tag& tag : _tags )
-			tagIndexMask.set( tag.index, true );
+			tagBitset.set( tag.index, true );
+
+		std::stringstream ss;
+		ss << std::hex << tagBitset.to_ullong();
+		tagsHash = ss.str();
 	}
 
 	bool matchesTags( const std::vector<Tag>& _tags, bool _skipBitset = false ) const;
 
 	std::string blazon;
 	std::vector<Tag> tags;
-	TagIndexBitset tagIndexMask;
+	TagBitset tagBitset;
+	std::string tagsHash;
 };
 
 struct BlazonDatabase
 {
 	std::vector<BlazonEntry> entries;
-	std::vector<TagIndexBitset> tagIndices;
+	std::vector<TagBitset> tagIndices;
 
 	void addEntry( const std::string& _blazon, const std::vector<Tag>& _tags );
 	void addEntry( const std::string& _blazon, const std::string& _tags );
@@ -75,7 +79,7 @@ size_t getModifierIndex( const std::string& _modifier );
 
 Tag makeTag( const std::string& _tagName, const std::vector<std::string>& _modifierNames );
 Tag makeTagFromString( const std::string& _string );
-TagIndexBitset makeBitsetFromTags( const std::vector<Tag>& _tags );
+TagBitset makeBitsetFromTags( const std::vector<Tag>& _tags );
 
 std::vector<Tag> makeTagListFromString( const std::string& _string );
 
