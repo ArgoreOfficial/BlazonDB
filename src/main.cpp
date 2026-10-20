@@ -33,18 +33,15 @@ int main()
 	indexContainer.addEntry( "azure, a lion argent",         "field:azure,lion:argent" );
 	indexContainer.addEntry( "gules, two bends or",          "field:gules,bends:or" );
 	indexContainer.addEntry( "party per fess gules and or",  "per_fess:gules:or" );
-
-	queryAndPrintResults( indexContainer, "field:azure,lion" );
-	queryAndPrintResults( indexContainer, "field:azure,lion:argent" );
+	indexContainer.addEntry( "azure, three crowns or two over one", "field:azure,crown:or:three:2_over_1", "The Kingdom of Sweden lesser arms");
+	
+	queryAndPrintResults( indexContainer, "field:azure,crown" );
+	queryAndPrintResults( indexContainer, "field:azure,crown:argent" );
 	queryAndPrintResults( indexContainer, "field:gules" );
-	queryAndPrintResults( indexContainer, "field:gules,bends" );
-	queryAndPrintResults( indexContainer, "field:gules,bends:or" );
-	queryAndPrintResults( indexContainer, "field:gules,bends:argent" );
-	queryAndPrintResults( indexContainer, "field:gules,bends:or:argent" );
-	queryAndPrintResults( indexContainer, "per_fess:gules" );
-	queryAndPrintResults( indexContainer, "per_fess:gules:or" );
-	queryAndPrintResults( indexContainer, "per_fess:or" );
-	queryAndPrintResults( indexContainer, "per_fess:or:gules" );
+	queryAndPrintResults( indexContainer, "crown" );
+	queryAndPrintResults( indexContainer, "crown:or" );
+	queryAndPrintResults( indexContainer, "crown:argent" );
+	queryAndPrintResults( indexContainer, "crown:or:argent" );
 	
 	// JSON Test
 	{
@@ -58,7 +55,7 @@ int main()
 
 	std::vector<unsigned long long> indextable = indexContainer.generateIndexTable();
 	{
-		std::ofstream file( "index_table.dat", std::ios::out | std::ios::binary );
+		std::ofstream file( "index_table.dat", std::ios::binary );
 		size_t size = indextable.size();
 		file.write( (char*)&size, sizeof( size_t ) );
 		file.write( (char*)indextable.data(), sizeof( unsigned long long ) * indextable.size() );
@@ -76,6 +73,18 @@ int main()
 
 		file.close();
 	}
+
+	// dump jsons
+	for ( size_t i = 0; i < indexContainer.entries.size(); i++ )
+	{
+
+		std::filesystem::path path = "db";
+		path = path / std::to_string( i );
+		path = path.replace_extension( ".json" );
+		std::ofstream file( path );
+		file << nlohmann::json(indexContainer.entries[ i ]).dump(4);
+	}
+	
 
 	return 0;
 }
