@@ -33,16 +33,16 @@ bool blazon::BlazonEntry::matchesTags( const std::vector<Tag>& _tags, bool _skip
 	return true;
 }
 
-void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::vector<Tag>& _tags )
+void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::vector<Tag>& _tags, const std::string& _description )
 {
-	BlazonEntry entry{ _blazon, _tags };
+	BlazonEntry entry{ _blazon, _tags, _description };
 	tagIndices.push_back( entry.tagBitset );
 	entries.push_back( std::move( entry ) );
 }
 
-void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::string& _tags )
+void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::string& _tags, const std::string& _description )
 {
-	BlazonEntry entry{ _blazon, blazon::makeTagListFromString( _tags ) };
+	BlazonEntry entry{ _blazon, blazon::makeTagListFromString( _tags ), _description };
 	tagIndices.push_back( entry.tagBitset );
 	entries.push_back( std::move( entry ) );
 }
@@ -265,6 +265,7 @@ void blazon::to_json( nlohmann::json& _json, const blazon::BlazonEntry& _p )
 {
 	_json = {
 		{ "blazon", _p.blazon },
+		{ "description", _p.description },
 		{ "hash", _p.tagsHash },
 		{ "tags", _p.tags }
 	};
@@ -273,6 +274,7 @@ void blazon::to_json( nlohmann::json& _json, const blazon::BlazonEntry& _p )
 void blazon::from_json( const nlohmann::json& _json, blazon::BlazonEntry& _p )
 {
 	_json.at( "blazon" ).get_to( _p.blazon );
+	_json.at( "description" ).get_to( _p.description );
 	_json.at( "hash" ).get_to( _p.tagsHash );
 	_json.at( "tags" ).get_to( _p.tags );
 }
