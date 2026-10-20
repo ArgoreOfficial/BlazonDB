@@ -5,6 +5,8 @@
 #include <vector>
 #include <bitset>
 
+#include <nlohmann/json.hpp>
+
 namespace blazon {
 
 typedef std::bitset<128> TagBitset;
@@ -84,5 +86,13 @@ TagBitset makeBitsetFromTags( const std::vector<Tag>& _tags );
 std::vector<Tag> makeTagListFromString( const std::string& _string );
 
 const bool doesTagsMatch( const Tag& _entry, const Tag& _query );
+
+
+void to_json( nlohmann::json& _json, const blazon::Tag& _p );
+void from_json( const nlohmann::json& _json, blazon::Tag& _p );
+
+void to_json( nlohmann::json& _json, const blazon::BlazonEntry& _p );
+void from_json( const nlohmann::json& _json, blazon::BlazonEntry& _p );
+
 
 }

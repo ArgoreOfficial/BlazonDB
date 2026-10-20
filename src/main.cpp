@@ -45,7 +45,15 @@ int main()
 	queryAndPrintResults( indexContainer, "per_fess:or" );
 	queryAndPrintResults( indexContainer, "per_fess:or:gules" );
 	
-
+	// JSON Test
+	{
+		std::vector<size_t> results = indexContainer.queryIndices( blazon::makeTagListFromString( "field:azure,lion:argent" ) );
+		for ( size_t r : results )
+		{
+			nlohmann::json json = indexContainer.entries[ r ];
+			printf( "JSON:\n%s\n", json.dump().c_str() );
+		}
+	}
 
 	return 0;
 }

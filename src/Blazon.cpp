@@ -221,3 +221,48 @@ const bool blazon::doesTagsMatch( const Tag& _entry, const Tag& _query )
 
 	return true;
 }
+
+void blazon::to_json( nlohmann::json& _json, const blazon::Tag& _p )
+{
+	std::vector<int> tagModifierIndices{};
+
+	for ( size_t i = 0; i < _p.modifiersBitset.size(); i++ )
+	{
+		if ( _p.modifiersBitset.test( i ) )
+			tagModifierIndices.push_back( i );
+	}
+
+	_json = nlohmann::json{
+		{ "tagIndex", _p.index },
+		{ "modifiers", tagModifierIndices },
+		{ "tinctureHashes", _p.tinctureHashes }
+	};
+}
+
+void blazon::from_json( const nlohmann::json& _json, blazon::Tag& _p )
+{
+	std::vector<int> tagModifierIndices{};
+
+	_json.at( "tagIndex" ).get_to( _p.index );
+	_json.at( "modifiers" ).get_to( tagModifierIndices );
+	_json.at( "tinctureHashes" ).get_to( _p.tinctureHashes );
+
+	for ( size_t i = 0; i < tagModifierIndices.size(); i++ )
+		_p.modifiersBitset.set( tagModifierIndices[ i ] );
+}
+
+void blazon::to_json( nlohmann::json& _json, const blazon::BlazonEntry& _p )
+{
+	_json = {
+		{ "blazon", _p.blazon },
+		{ "hash", _p.tagsHash },
+		{ "tags", _p.tags }
+	};
+}
+
+void blazon::from_json( const nlohmann::json& _json, blazon::BlazonEntry& _p )
+{
+	_json.at( "blazon" ).get_to( _p.blazon );
+	_json.at( "hash" ).get_to( _p.tagsHash );
+	_json.at( "tags" ).get_to( _p.tags );
+}

@@ -13,14 +13,14 @@ set_languages("clatest", "cxxlatest")
 add_rules "mode.debug"
 add_rules "mode.release"
 
---add_requires("nlohmann_json")
+add_requires("nlohmann_json")
 
 local PROJECT_NAME = "BlazonDB"
 
 target(PROJECT_NAME)
     set_kind "binary" 
     
-    --add_packages("nlohmann_json")
+    add_packages("nlohmann_json")
 
     if is_mode("debug") then
         set_basename(PROJECT_NAME .. "_debug_$(arch)")
