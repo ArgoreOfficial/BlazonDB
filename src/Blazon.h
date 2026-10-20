@@ -73,6 +73,8 @@ struct BlazonDatabase
 
 	std::vector<size_t> query( const std::vector<Tag>& _searchTags );
 	std::vector<size_t> queryIndices( const std::vector<Tag>& _searchTags );
+
+	std::vector<unsigned long long> generateIndexTable();
 };
 
 bool isModifierTincture( const std::string& _modifier );

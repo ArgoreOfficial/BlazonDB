@@ -10,6 +10,7 @@
  */
 
 #include <stdio.h>
+#include <fstream>
 
 #include <Blazon.h>
 #include <nlohmann/json.hpp>
@@ -53,6 +54,27 @@ int main()
 			nlohmann::json json = indexContainer.entries[ r ];
 			printf( "JSON:\n%s\n", json.dump().c_str() );
 		}
+	}
+
+	std::vector<unsigned long long> indextable = indexContainer.generateIndexTable();
+	{
+		std::ofstream file( "index_table.dat", std::ios::out | std::ios::binary );
+		size_t size = indextable.size();
+		file.write( (char*)&size, sizeof( size_t ) );
+		file.write( (char*)indextable.data(), sizeof( unsigned long long ) * indextable.size() );
+		file.close();
+	}
+
+	{
+		std::ifstream file( "index_table.dat", std::ios::binary );
+		std::vector<unsigned long long> indextable2;
+
+		size_t size;
+		file.read( (char*)&size, sizeof( size_t ) );
+		indextable2.resize( size );
+		file.read( (char*)indextable2.data(), sizeof( unsigned long long ) * size );
+
+		file.close();
 	}
 
 	return 0;

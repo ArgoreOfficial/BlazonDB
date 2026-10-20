@@ -84,6 +84,16 @@ std::vector<size_t> blazon::BlazonDatabase::queryIndices( const std::vector<Tag>
 	
 	return results;
 }
+
+std::vector<unsigned long long> blazon::BlazonDatabase::generateIndexTable()
+{
+	std::vector<unsigned long long> vec;
+	for ( size_t i = 0; i < entries.size(); i++ )
+		vec.push_back( entries[ i ].tagBitset.to_ullong() );
+	
+	return vec;
+}
+
 bool blazon::isModifierTincture( const std::string& _modifier )
 {
 	for ( const auto& t : CONST_TINCTURES )
