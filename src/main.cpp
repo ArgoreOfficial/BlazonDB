@@ -11,13 +11,22 @@
 
 #include <gui/App.h>
 
+/*
 int main( int _argc, char* _argv[] )
 {
 	std::srand( std::time( 0 ) );
 
 	wxInitAllImageHandlers();
-	wxEntry( _argc, _argv );
-	return 0;
+	return wxEntry( _argc, _argv );
+}
+*/
+
+int APIENTRY WinMain( HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow )
+{
+	std::srand( std::time( 0 ) );
+
+	wxInitAllImageHandlers();
+	return wxEntry( hInst, hInstPrev, cmdline, cmdshow );
 }
 
 wxIMPLEMENT_APP_NO_MAIN( blazon::Application );

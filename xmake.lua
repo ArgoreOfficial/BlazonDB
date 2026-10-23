@@ -37,6 +37,8 @@ target(PROJECT_NAME)
         add_includedirs(WX_ROOT .. "include/", WX_ROOT .. "lib/vc14x_x64_dll/mswu/")
         add_linkdirs(WX_ROOT .. "lib/vc14x_x64_dll/")
         add_files(WX_ROOT .. "include/wx/msw/wx.rc")
+
+        add_ldflags("/SUBSYSTEM:WINDOWS")
     end
 
     add_configfiles("dat/*", {onlycopy = true})
