@@ -87,14 +87,14 @@ void blazon::SearchWindow::OnSearch( wxCommandEvent& event )
 
 	std::string query = m_searchBar->GetValue().ToStdString();
 
-	std::vector<std::string> results = m_blazonDB.queryIndices( blazon::makeTagListFromString( query ) );
+	m_searchResults = m_blazonDB.queryIndices( blazon::makeTagListFromString( query ) );
 	m_resultListBox->Clear();
 
-	if ( results.size() > 0 )
+	if ( m_searchResults.size() > 0 )
 	{
 		wxArrayString items;
 	
-		for ( const std::string& r : results )
+		for ( const std::string& r : m_searchResults )
 		{
 			blazon::BlazonEntry entry = m_blazonDB.getEntry( r );
 			items.Add( entry.blazon );

@@ -33,6 +33,8 @@ private:
 
 	wxTextCtrl* m_searchBar = nullptr;
 	wxListBox* m_resultListBox = nullptr;
+
+	std::vector<std::string> m_searchResults;
 };
 
 extern SearchWindow* g_frame;
