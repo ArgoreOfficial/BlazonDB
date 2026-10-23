@@ -130,11 +130,14 @@ Tag makeTagFromString( const std::string& _string );
 TagBitset makeBitsetFromTags( const std::vector<Tag>& _tags );
 
 std::vector<Tag> makeTagListFromString( const std::string& _string );
-
 const bool doesTagsMatch( const Tag& _entry, const Tag& _query );
 
 std::filesystem::path getEntryPath( const std::string& _entryID );
 std::filesystem::path getEntryIndexPath();
+
+std::vector<std::string> getAutocompleteList( const std::string& _string, const std::vector<std::string>& _options );
+std::vector<std::string> getAutocompleteListTag( const std::string& _string );
+std::vector<std::string> getAutocompleteListModifier( const std::string& _string );
 
 void to_json( nlohmann::json& _json, const blazon::Tag& _p );
 void from_json( const nlohmann::json& _json, blazon::Tag& _p );

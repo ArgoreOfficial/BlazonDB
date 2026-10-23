@@ -1,8 +1,9 @@
 ﻿#pragma once
 
 #include <wxinclude.h>
-#include <Blazon.h>
+#include <wx/popupwin.h>
 
+#include <Blazon.h>
 #include <filesystem>
 
 namespace blazon {
@@ -18,6 +19,7 @@ private:
 	wxTextCtrl* m_entryBlazon = nullptr;
 	wxTextCtrl* m_entryTags = nullptr;
 	wxTextCtrl* m_entryDesc = nullptr;
+	wxPopupTransientWindow* m_autocompletePopup = nullptr;
 
 	CreateWindow** m_selfPtr;
 
@@ -26,12 +28,16 @@ private:
 			*m_selfPtr = nullptr;
 		Destroy();
 	}
+
+	void OnTagTextChanged( wxCommandEvent& event );
+	void OnCreateAndImport( wxCommandEvent& event );
 };
 
 class SearchWindow : public wxFrame
 {
 public:
 	SearchWindow();
+	blazon::BlazonDatabase m_blazonDB{};
 
 private:
 	void OnAbout( wxCommandEvent& event ) {
@@ -48,8 +54,7 @@ private:
 	void OnSearchSelected( wxCommandEvent& _event );
 
 	wxPanel* m_panel = new wxPanel( this );
-	blazon::BlazonDatabase m_blazonDB{};
-
+	
 	wxTextCtrl* m_searchBar = nullptr;
 	wxListBox* m_resultListBox = nullptr;
 

@@ -326,6 +326,35 @@ std::filesystem::path blazon::getEntryIndexPath()
 	return path;
 }
 
+std::vector<std::string> blazon::getAutocompleteList( const std::string& _string, const std::vector<std::string>& _options )
+{
+	std::vector<std::string> res;
+	for ( auto& t : CONST_TAGS )
+	{
+		if ( t.find( _string ) == 0 )
+			res.push_back( t );
+	}
+	return res;
+}
+
+std::vector<std::string> blazon::getAutocompleteListTag( const std::string& _string )
+{
+	return getAutocompleteList( _string, CONST_TAGS );
+}
+
+std::vector<std::string> blazon::getAutocompleteListModifier( const std::string& _string )
+{
+	std::vector<std::string> res{};
+
+	auto m = getAutocompleteList( _string, CONST_MODIFIERS );
+	auto t = getAutocompleteList( _string, CONST_TINCTURES );
+
+	res.insert( res.end(), m.begin(), m.end() );
+	res.insert( res.end(), t.begin(), t.end() );
+
+	return res;
+}
+
 void blazon::to_json( nlohmann::json& _json, const blazon::Tag& _p )
 {
 	std::vector<int> tagModifierIndices{};

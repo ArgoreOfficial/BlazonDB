@@ -1,7 +1,7 @@
 ﻿#include "App.h"
 
 #include <wx/srchctrl.h>
-#include <wx/wrapsizer.h>
+#include <wx/textcompleter.h>
 
 blazon::SearchWindow* blazon::g_frame = nullptr;
 
@@ -166,10 +166,31 @@ blazon::CreateWindow::CreateWindow( wxWindow* _parent, CreateWindow** _selfPtr )
 	m_selfPtr = _selfPtr;
 
 	m_entryBlazon = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	m_entryTags = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_CHARWRAP );
+	m_entryTags = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_CHARWRAP);
 	m_entryDesc = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_AUTO_URL );
+	
+	m_autocompletePopup = new wxPopupTransientWindow( m_entryTags );
+	wxListBox* autocompleteListbox = new wxListBox( m_autocompletePopup, wxID_ANY );
+	
+	{
+		wxBoxSizer* autoCompleteSizer = new wxBoxSizer( wxVERTICAL );
+		autoCompleteSizer->Add( autocompleteListbox, 1, wxEXPAND );
+		m_autocompletePopup->SetSizer( autoCompleteSizer );
+	}
 
-	wxButton* createAndImport = new wxButton( m_panel, -1, "Create and Import" );
+	wxArrayString array;
+	array.Add( "one" );
+	array.Add( "two" );
+	array.Add( "three" );
+	array.Add( "four" );
+	autocompleteListbox->InsertItems( array, 0 );
+
+	m_autocompletePopup->Hide();
+
+	Bind( wxEVT_TEXT, &CreateWindow::OnTagTextChanged, this, m_entryTags->GetId() );
+
+	wxButton* createAndImport = new wxButton( m_panel, wxID_ANY, "Create and Import" );
+	Bind( wxEVT_BUTTON, &CreateWindow::OnCreateAndImport, this, createAndImport->GetId() );
 
 	m_entryBlazon->SetMinSize( { 10, 10 } );
 	m_entryTags->SetMinSize( { 10, 10 } );
@@ -184,4 +205,29 @@ blazon::CreateWindow::CreateWindow( wxWindow* _parent, CreateWindow** _selfPtr )
 	entryPanelSizer->Add( m_entryDesc, 5, wxEXPAND );
 	entryPanelSizer->Add( createAndImport, 0, wxEXPAND );
 	m_panel->SetSizer( entryPanelSizer );
+}
+
+void blazon::CreateWindow::OnTagTextChanged( wxCommandEvent& event )
+{
+	long pos = m_entryTags->GetInsertionPoint();
+	wxPoint point = m_entryTags->PositionToCoords( pos );
+	wxPoint screenPoint = m_entryTags->GetScreenPosition();
+
+	int fontsize = m_entryTags->GetFont().GetPixelSize().y;
+	m_autocompletePopup->SetPosition( 
+		{ 
+			screenPoint.x,
+			point.y + screenPoint.y + fontsize + 2 // magic number alert
+		} );
+
+	m_autocompletePopup->Fit();
+	m_autocompletePopup->Show();
+}
+
+void blazon::CreateWindow::OnCreateAndImport( wxCommandEvent& event )
+{
+	blazon::BlazonEntry newEntry( m_entryBlazon->GetValue().ToStdString(), m_entryTags->GetValue().ToStdString(), m_entryDesc->GetValue().ToStdString() );
+	SearchWindow* sw = (SearchWindow*)GetParent();
+	sw->m_blazonDB.createEntry( newEntry );
+	sw->m_blazonDB.cacheEntry( newEntry );
 }
