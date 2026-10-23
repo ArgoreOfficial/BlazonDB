@@ -9,10 +9,7 @@
 ---------------------------------
 
 set_languages("clatest", "cxxlatest")
-
-add_rules "mode.debug"
-add_rules "mode.release"
-
+add_rules("mode.debug", "mode.release")
 add_requires("nlohmann_json")
 
 local PROJECT_NAME = "BlazonDB"
@@ -28,6 +25,18 @@ target(PROJECT_NAME)
     else 
         set_basename(PROJECT_NAME)
         set_configdir("package/bin/dat")
+    end
+
+    -- wxwidgets doesn't build through xrepo anymore, for some reason
+    -- so we link manually here
+    -- change WX_ROOT to wherever your wx install is
+    if is_plat("windows") then
+        local WX_ROOT = "D:/SDK/wx/3.3.1/"
+
+        add_defines("__WXMSW__", "WXUSINGDLL", "_UNICODE", "wxMSVC_VERSION_AUTO", "wxMSVC_VERSION_ABI_COMPAT", "NDEBUG")
+        add_includedirs(WX_ROOT .. "include/", WX_ROOT .. "lib/vc14x_x64_dll/mswu/")
+        add_linkdirs(WX_ROOT .. "lib/vc14x_x64_dll/")
+        add_files(WX_ROOT .. "include/wx/msw/wx.rc")
     end
 
     add_configfiles("dat/*", {onlycopy = true})
