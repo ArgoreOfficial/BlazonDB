@@ -12,79 +12,33 @@
 #include <stdio.h>
 #include <fstream>
 
+#include <util.h>
+
 #include <Blazon.h>
 #include <nlohmann/json.hpp>
 
-static void queryAndPrintResults( blazon::BlazonDatabase& _indexContainer, const std::string& _search )
-{
-	std::vector<size_t> results = _indexContainer.queryIndices( blazon::makeTagListFromString( _search ) );
-	printf( "Search results for: [%s]\n", _search.c_str() );
-	
-	for ( size_t r : results )
-		printf( "  %s\n", _indexContainer.entries[ r ].blazon.c_str() );
-}
-
-
 int main()
 {
-	blazon::BlazonDatabase indexContainer{};
-	indexContainer.addEntry( "azure, a lion rampant or",     "field:azure,lion:or:rampant" );
-	indexContainer.addEntry( "azure, a lion rampant argent", "field:azure,lion:argent:rampant" );
-	indexContainer.addEntry( "azure, a lion argent",         "field:azure,lion:argent" );
-	indexContainer.addEntry( "gules, two bends or",          "field:gules,bends:or" );
-	indexContainer.addEntry( "party per fess gules and or",  "per_fess:gules:or" );
-	indexContainer.addEntry( "azure, three crowns or two over one", "field:azure,crown:or:three:2_over_1", "The Kingdom of Sweden lesser arms");
-	
-	queryAndPrintResults( indexContainer, "field:azure,crown" );
-	queryAndPrintResults( indexContainer, "field:azure,crown:argent" );
-	queryAndPrintResults( indexContainer, "field:gules" );
-	queryAndPrintResults( indexContainer, "crown" );
-	queryAndPrintResults( indexContainer, "crown:or" );
-	queryAndPrintResults( indexContainer, "crown:argent" );
-	queryAndPrintResults( indexContainer, "crown:or:argent" );
-	
-	// JSON Test
+	std::srand( std::time( 0 ) );
+
+	blazon::BlazonDatabase db{};
+	db.loadIndexTable();
+		
+	// Test
 	{
-		std::vector<size_t> results = indexContainer.queryIndices( blazon::makeTagListFromString( "field:azure,lion:argent" ) );
-		for ( size_t r : results )
+		std::vector<std::string> results = db.queryIndices( blazon::makeTagListFromString( "field:azure" ) );
+		for ( const std::string& r : results )
 		{
-			nlohmann::json json = indexContainer.entries[ r ];
-			printf( "JSON:\n%s\n", json.dump().c_str() );
+			blazon::BlazonEntry entry = db.getEntry( r );
+			printf( "%s\n", entry.blazon.c_str() );
 		}
 	}
 
-	std::vector<unsigned long long> indextable = indexContainer.generateIndexTable();
-	{
-		std::ofstream file( "index_table.dat", std::ios::binary );
-		size_t size = indextable.size();
-		file.write( (char*)&size, sizeof( size_t ) );
-		file.write( (char*)indextable.data(), sizeof( unsigned long long ) * indextable.size() );
-		file.close();
-	}
+//	blazon::BlazonEntry testBlazon( "azure, three crowns or two over one", "field:azure,crown:or:three:2_over_1", "The Kingdom of Sweden lesser arms" );
+//	db.createEntry( testBlazon );
+//	db.cacheEntry( testBlazon );
 
-	{
-		std::ifstream file( "index_table.dat", std::ios::binary );
-		std::vector<unsigned long long> indextable2;
-
-		size_t size;
-		file.read( (char*)&size, sizeof( size_t ) );
-		indextable2.resize( size );
-		file.read( (char*)indextable2.data(), sizeof( unsigned long long ) * size );
-
-		file.close();
-	}
-
-	// dump jsons
-	for ( size_t i = 0; i < indexContainer.entries.size(); i++ )
-	{
-
-		std::filesystem::path path = "db";
-		path = path / std::to_string( i );
-		path = path.replace_extension( ".json" );
-		std::ofstream file( path );
-		file << nlohmann::json(indexContainer.entries[ i ]).dump(4);
-	}
-	
+//	db.generateIndexTable();
 
 	return 0;
 }

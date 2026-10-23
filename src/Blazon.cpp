@@ -1,9 +1,43 @@
 ﻿#include "Blazon.h"
 
 #include <sstream>
+#include <fstream>
 #include <math.h>
-
 #include "hash.h"
+
+#include <util.h>
+
+blazon::BlazonEntry::BlazonEntry( const std::string& _blazon, const std::string& _tags, const std::string& _description )
+{
+	blazon = _blazon;
+	tags = makeTagListFromString( _tags );
+	description = _description;
+
+	for ( const Tag& tag : tags )
+		tagBitset.set( tag.index, true );
+
+	std::stringstream ss;
+	ss << std::hex << tagBitset.to_ullong();
+	tagsHash = ss.str();
+
+	generateEntryID();
+}
+
+blazon::BlazonEntry::BlazonEntry( const std::string& _blazon, const std::vector<Tag>& _tags, const std::string& _description )
+{
+	blazon = _blazon;
+	tags = _tags;
+	description = _description;
+
+	for ( const Tag& tag : _tags )
+		tagBitset.set( tag.index, true );
+
+	std::stringstream ss;
+	ss << std::hex << tagBitset.to_ullong();
+	tagsHash = ss.str();
+
+	generateEntryID();
+}
 
 bool blazon::BlazonEntry::matchesTags( const std::vector<Tag>& _tags, bool _skipBitset ) const
 {
@@ -33,65 +67,110 @@ bool blazon::BlazonEntry::matchesTags( const std::vector<Tag>& _tags, bool _skip
 	return true;
 }
 
-void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::vector<Tag>& _tags, const std::string& _description )
+blazon::BlazonDatabase::BlazonDatabase()
 {
-	BlazonEntry entry{ _blazon, _tags, _description };
-	tagIndices.push_back( entry.tagBitset );
-	entries.push_back( std::move( entry ) );
+	std::filesystem::path dbPath = getEntryPath("asd").parent_path();
+	if ( !std::filesystem::exists( dbPath ) )
+		std::filesystem::create_directories( dbPath );
 }
 
-void blazon::BlazonDatabase::addEntry( const std::string& _blazon, const std::string& _tags, const std::string& _description )
+size_t blazon::BlazonDatabase::loadEntry( const std::string& _entryID )
 {
-	BlazonEntry entry{ _blazon, blazon::makeTagListFromString( _tags ), _description };
-	tagIndices.push_back( entry.tagBitset );
-	entries.push_back( std::move( entry ) );
+	std::filesystem::path path = getEntryPath( _entryID );
+	std::ifstream file( path );
+	if ( !file )
+		return -1;
+
+	entries.push_back( nlohmann::json::parse( file ) );
+	return entries.size() - 1;
 }
 
-std::vector<size_t> blazon::BlazonDatabase::query( const std::vector<Tag>& _searchTags )
+blazon::BlazonEntry blazon::BlazonDatabase::getEntry( const std::string& _entryID )
 {
-	std::vector<size_t> results;
+	// TODO
+	for ( size_t i = 0; i < entries.size(); i++ )
+	{
+		if ( entries[ i ].entryID == _entryID )
+			return entries[ i ];
+	}
+
+	size_t index = loadEntry( _entryID );
+	if ( index != -1 )
+		return entries[ index ];
+
+	return {};
+}
+
+void blazon::BlazonDatabase::cacheEntry( const BlazonEntry& _entry )
+{
+	std::filesystem::path path = getEntryPath( _entry.entryID );
+	std::ofstream file( path );
+	file << nlohmann::json( _entry ).dump( 4 );
+}
+
+std::vector<std::string> blazon::BlazonDatabase::query( const std::vector<Tag>& _searchTags )
+{
+	std::vector<std::string> results;
 
 	for ( size_t i = 0; i < entries.size(); i++ )
 	{
 		const BlazonEntry& card = entries[ i ];
 		if ( card.matchesTags( _searchTags ) )
-			results.push_back( i );
+			results.push_back( card.entryID );
 	}
 
 	return results;
 }
 
-std::vector<size_t> blazon::BlazonDatabase::queryIndices( const std::vector<Tag>& _searchTags )
+std::vector<std::string> blazon::BlazonDatabase::queryIndices( const std::vector<Tag>& _searchTags )
 {
 	TagBitset queryBitset = makeBitsetFromTags( _searchTags );
-	std::vector<size_t> presearchEntries{};
-	std::vector<size_t> results{};
+	std::vector<std::string> presearchEntries{};
+	std::vector<std::string> results{};
 
-	for ( size_t i = 0; i < tagIndices.size(); i++ )
+	for ( size_t i = 0; i < entryIndices.size(); i++ )
 	{
-		if ( ( queryBitset & tagIndices[ i ] ) == queryBitset )
-			presearchEntries.push_back( i );
+		if ( ( queryBitset & entryIndices[ i ].getBitset() ) == queryBitset )
+			presearchEntries.push_back( entryIndices[ i ].getEntryName() );
 	}
 	
 	for ( size_t i = 0; i < presearchEntries.size(); i++ )
 	{
-		size_t entriesIndex = presearchEntries[ i ];
+		const std::string& entryName = presearchEntries[ i ];
 
-		const BlazonEntry& card = entries[ entriesIndex ];
+		const BlazonEntry& card = getEntry( entryName );
 		if ( card.matchesTags( _searchTags ) )
-			results.push_back( entriesIndex );
+			results.push_back( entryName );
 	}
 	
 	return results;
 }
 
-std::vector<unsigned long long> blazon::BlazonDatabase::generateIndexTable()
+void blazon::BlazonDatabase::generateIndexTable()
 {
-	std::vector<unsigned long long> vec;
-	for ( size_t i = 0; i < entries.size(); i++ )
-		vec.push_back( entries[ i ].tagBitset.to_ullong() );
+	std::ofstream file( getEntryIndexPath(), std::ios::binary);
+	size_t size = entryIndices.size();
 	
-	return vec;
+	file.write( (char*)&size, sizeof( size_t ) );
+	file.write( (char*)entryIndices.data(), sizeof( EntryIndex ) * entryIndices.size() );
+
+	file.close();
+}
+
+void blazon::BlazonDatabase::loadIndexTable()
+{
+	std::ifstream file( getEntryIndexPath(), std::ios::binary);
+	if ( !file )
+		return;
+
+	size_t size;
+	
+	file.read( (char*)&size, sizeof( size_t ) );
+	entryIndices.resize( size );
+
+	file.read( (char*)entryIndices.data(), sizeof( EntryIndex ) * size );
+
+	file.close();
 }
 
 bool blazon::isModifierTincture( const std::string& _modifier )
@@ -232,6 +311,21 @@ const bool blazon::doesTagsMatch( const Tag& _entry, const Tag& _query )
 	return true;
 }
 
+std::filesystem::path blazon::getEntryPath( const std::string& _entryID )
+{
+	std::filesystem::path path = Util::getFolderPath( FOLDERID_Documents ) / "BlazonDB" / "cache";
+	path = path / _entryID;
+	path = path.replace_extension( ".json" );
+	return path;
+}
+
+std::filesystem::path blazon::getEntryIndexPath()
+{
+	std::filesystem::path path = Util::getFolderPath( FOLDERID_Documents ) / "BlazonDB" / "entry_index";
+	path = path.replace_extension( ".dat" );
+	return path;
+}
+
 void blazon::to_json( nlohmann::json& _json, const blazon::Tag& _p )
 {
 	std::vector<int> tagModifierIndices{};
@@ -264,6 +358,7 @@ void blazon::from_json( const nlohmann::json& _json, blazon::Tag& _p )
 void blazon::to_json( nlohmann::json& _json, const blazon::BlazonEntry& _p )
 {
 	_json = {
+		{ "id", _p.entryID },
 		{ "blazon", _p.blazon },
 		{ "description", _p.description },
 		{ "hash", _p.tagsHash },
@@ -273,8 +368,15 @@ void blazon::to_json( nlohmann::json& _json, const blazon::BlazonEntry& _p )
 
 void blazon::from_json( const nlohmann::json& _json, blazon::BlazonEntry& _p )
 {
+	_json.at( "id" ).get_to( _p.entryID );
 	_json.at( "blazon" ).get_to( _p.blazon );
 	_json.at( "description" ).get_to( _p.description );
 	_json.at( "hash" ).get_to( _p.tagsHash );
 	_json.at( "tags" ).get_to( _p.tags );
+
+	std::stringstream ss(_p.tagsHash);
+	unsigned long long v;
+	ss >> std::hex >> v;
+	
+	_p.tagBitset = v;
 }

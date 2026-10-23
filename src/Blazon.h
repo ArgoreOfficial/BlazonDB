@@ -43,24 +43,53 @@ struct Tag
 	std::vector<uint32_t> tinctureHashes;
 };
 
+struct EntryIndex
+{
+	EntryIndex() = default;
+	EntryIndex( const TagBitset& _bitset, const std::string& _entry )
+	{
+		tagbits = _bitset.to_ullong();
+		for ( size_t i = 0; i < _entry.size(); i++ )
+			entry[ i ] = _entry[ i ];
+	}
+
+	TagBitset getBitset() const {
+		return TagBitset( tagbits );
+	}
+
+	std::string getEntryName() const {
+		std::string s;
+		s.resize( 8 );
+		for ( size_t i = 0; i < 8; i++ )
+			s[ i ] = entry[ i ];
+		return s;
+	}
+
+	unsigned long long tagbits;
+	char entry[ 8 ] = { 0 };
+};
+
 struct BlazonEntry
 {
 	BlazonEntry() = default;
-	BlazonEntry( const std::string& _blazon, const std::vector<Tag>& _tags, const std::string& _description = "" ) {
-		blazon = _blazon;
-		tags = _tags;
-		description = _description;
+	BlazonEntry( const std::string& _blazon, const std::string& _tags, const std::string& _description = "" );
+	BlazonEntry( const std::string& _blazon, const std::vector<Tag>& _tags, const std::string& _description = "" );
 
-		for ( const Tag& tag : _tags )
-			tagBitset.set( tag.index, true );
+	void generateEntryID()
+	{
+		constexpr char chars[] = {
+			'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+			'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
+		};
 
-		std::stringstream ss;
-		ss << std::hex << tagBitset.to_ullong();
-		tagsHash = ss.str();
+		entryID.resize( 8, ' ' );
+		for ( size_t i = 0; i < entryID.size(); i++ )
+			entryID[ i ] = chars[ std::rand() % 52 ];
 	}
 
 	bool matchesTags( const std::vector<Tag>& _tags, bool _skipBitset = false ) const;
 
+	std::string entryID;
 	std::string blazon;
 	std::string description;
 	std::vector<Tag> tags;
@@ -70,16 +99,26 @@ struct BlazonEntry
 
 struct BlazonDatabase
 {
+	BlazonDatabase();
+
 	std::vector<BlazonEntry> entries;
-	std::vector<TagBitset> tagIndices;
+	std::vector<EntryIndex> entryIndices;
 
-	void addEntry( const std::string& _blazon, const std::vector<Tag>& _tags, const std::string& _description = "" );
-	void addEntry( const std::string& _blazon, const std::string& _tags, const std::string& _description = "" );
+	size_t createEntry( const BlazonEntry& _entry ) {
+		entryIndices.push_back( { _entry.tagBitset, _entry.entryID } );
+		entries.push_back( _entry );
+		return entries.size() - 1;
+	}
 
-	std::vector<size_t> query( const std::vector<Tag>& _searchTags );
-	std::vector<size_t> queryIndices( const std::vector<Tag>& _searchTags );
+	size_t loadEntry( const std::string& _entryID );
+	BlazonEntry getEntry( const std::string& _entryID );
+	void cacheEntry( const BlazonEntry& _entry );
 
-	std::vector<unsigned long long> generateIndexTable();
+	std::vector<std::string> query( const std::vector<Tag>& _searchTags );
+	std::vector<std::string> queryIndices( const std::vector<Tag>& _searchTags );
+
+	void generateIndexTable();
+	void loadIndexTable();
 };
 
 bool isModifierTincture( const std::string& _modifier );
@@ -94,6 +133,8 @@ std::vector<Tag> makeTagListFromString( const std::string& _string );
 
 const bool doesTagsMatch( const Tag& _entry, const Tag& _query );
 
+std::filesystem::path getEntryPath( const std::string& _entryID );
+std::filesystem::path getEntryIndexPath();
 
 void to_json( nlohmann::json& _json, const blazon::Tag& _p );
 void from_json( const nlohmann::json& _json, blazon::Tag& _p );
