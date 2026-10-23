@@ -7,6 +7,27 @@
 
 namespace blazon {
 
+class CreateWindow : public wxFrame
+{
+public:
+	CreateWindow( wxWindow* _parent, CreateWindow** _selfPtr );
+
+private:
+	wxPanel* m_panel = new wxPanel( this );
+
+	wxTextCtrl* m_entryBlazon = nullptr;
+	wxTextCtrl* m_entryTags = nullptr;
+	wxTextCtrl* m_entryDesc = nullptr;
+
+	CreateWindow** m_selfPtr;
+
+	void OnClose( wxCloseEvent& event ) {
+		if ( m_selfPtr )
+			*m_selfPtr = nullptr;
+		Destroy();
+	}
+};
+
 class SearchWindow : public wxFrame
 {
 public:
@@ -23,10 +44,8 @@ private:
 	}
 
 	void OnSearch( wxCommandEvent& event );
-
-	void OnCreateEntryWindow( wxCommandEvent& event ) {
-		wxMessageBox( "PLACEHOLDER", "Create", wxOK | wxICON_INFORMATION );
-	}
+	void OnCreateEntryWindow( wxCommandEvent& event );
+	void OnSearchSelected( wxCommandEvent& _event );
 
 	wxPanel* m_panel = new wxPanel( this );
 	blazon::BlazonDatabase m_blazonDB{};
@@ -34,7 +53,14 @@ private:
 	wxTextCtrl* m_searchBar = nullptr;
 	wxListBox* m_resultListBox = nullptr;
 
+	wxStaticText* m_entryHeader = nullptr;
+	wxTextCtrl*   m_entryBlazon = nullptr;
+	wxTextCtrl*   m_entryTags   = nullptr;
+	wxTextCtrl*   m_entryDesc   = nullptr;
+
 	std::vector<std::string> m_searchResults;
+
+	CreateWindow* m_createWindow = nullptr;
 };
 
 extern SearchWindow* g_frame;
