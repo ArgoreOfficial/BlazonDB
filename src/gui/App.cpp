@@ -40,7 +40,7 @@ blazon::SearchWindow::SearchWindow() :
 	{
 		wxPanel* searchBarPanel = new wxPanel( searchContainerPanel );
 		{
-			m_searchBar = new wxTextCtrl( 
+			m_searchBar = new BlazonTagTextCtrl(
 				searchBarPanel, ID_TOOL_SEARCH_BAR, 
 				"", 
 				wxDefaultPosition, wxDefaultSize, 
@@ -171,23 +171,9 @@ blazon::CreateWindow::CreateWindow( wxWindow* _parent, CreateWindow** _selfPtr )
 	tagsValidator.SetCharIncludes( "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890,:_");
 	
 	m_entryBlazon = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	m_entryTags = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_CHARWRAP, tagsValidator );
+	m_entryTags = new BlazonTagTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_CHARWRAP, tagsValidator);
 	m_entryDesc = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_AUTO_URL );
 	
-
-	m_autoCompletePopup = new wxPopupTransientWindow( m_entryTags );
-	m_autoCompleteListBox = new wxListBox( m_autoCompletePopup, wxID_ANY );
-	
-	{
-		wxBoxSizer* autoCompleteSizer = new wxBoxSizer( wxVERTICAL );
-		autoCompleteSizer->Add( m_autoCompleteListBox, 1, wxEXPAND );
-		m_autoCompletePopup->SetSizer( autoCompleteSizer );
-	}
-
-	m_autoCompletePopup->Hide();
-
-	Bind( wxEVT_TEXT, &CreateWindow::OnTagTextChanged, this, m_entryTags->GetId() );
-
 	wxButton* createAndImport = new wxButton( m_panel, wxID_ANY, "Create and Import" );
 	Bind( wxEVT_BUTTON, &CreateWindow::OnCreateAndImport, this, createAndImport->GetId() );
 
@@ -206,27 +192,49 @@ blazon::CreateWindow::CreateWindow( wxWindow* _parent, CreateWindow** _selfPtr )
 	m_panel->SetSizer( entryPanelSizer );
 }
 
-void blazon::CreateWindow::OnTagTextChanged( wxCommandEvent& event )
+void blazon::CreateWindow::OnCreateAndImport( wxCommandEvent& event )
 {
-	long pos = m_entryTags->GetInsertionPoint();
-	wxPoint point = m_entryTags->PositionToCoords( pos );
-	wxPoint screenPoint = m_entryTags->GetScreenPosition();
+	blazon::BlazonEntry newEntry( m_entryBlazon->GetValue().ToStdString(), m_entryTags->GetValue().ToStdString(), m_entryDesc->GetValue().ToStdString() );
+	SearchWindow* sw = (SearchWindow*)GetParent();
+	sw->m_blazonDB.createEntry( newEntry );
+	sw->m_blazonDB.cacheEntry( newEntry );
+}
 
-	int fontsize = m_entryTags->GetFont().GetPixelSize().y;
-	m_autoCompletePopup->SetPosition( 
-		{ 
+blazon::BlazonTagTextCtrl::BlazonTagTextCtrl( wxWindow* parent, wxWindowID id, const wxString& value, const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name )
+	: wxTextCtrl( parent, id, value, pos, size, style, validator, name )
+{
+	m_autoCompletePopup = new wxPopupTransientWindow( this );
+	m_autoCompleteListBox = new wxListBox( m_autoCompletePopup, wxID_ANY );
+	
+	wxBoxSizer* autoCompleteSizer = new wxBoxSizer( wxVERTICAL );
+	autoCompleteSizer->Add( m_autoCompleteListBox, 1, wxEXPAND );
+	m_autoCompletePopup->SetSizer( autoCompleteSizer );
+	
+	m_autoCompletePopup->Hide();
+	Bind( wxEVT_TEXT, &BlazonTagTextCtrl::OnTextChanged, this );
+}
+
+void blazon::BlazonTagTextCtrl::OnTextChanged( wxCommandEvent& event )
+{
+	long pos = GetInsertionPoint();
+	wxPoint point = PositionToCoords( pos );
+	wxPoint screenPoint = GetScreenPosition();
+
+	int fontsize = GetFont().GetPixelSize().y;
+	m_autoCompletePopup->SetPosition(
+		{
 			screenPoint.x,
 			point.y + screenPoint.y + fontsize + 2 // magic number alert
 		} );
 
-	std::string fulltext = m_entryTags->GetValue().ToStdString();
+	std::string fulltext = GetValue().ToStdString();
 
 	size_t lastTagDiv = fulltext.find_last_of( "," );
 	size_t lastModDiv = fulltext.find_last_of( ":" );
 	std::string display = "";
 
 	const bool isOnTag = lastModDiv == std::string::npos || ( lastTagDiv != std::string::npos && lastTagDiv > lastModDiv );
-	
+
 	std::vector<std::string> autoCompleteList{ };
 
 	if ( isOnTag )
@@ -251,24 +259,16 @@ void blazon::CreateWindow::OnTagTextChanged( wxCommandEvent& event )
 	std::sort( autoCompleteList.begin(), autoCompleteList.end() );
 
 	if ( !blazon::validateTagListString( fulltext ) )
-		m_entryTags->SetForegroundColour( *wxRED );
+		SetForegroundColour( *wxRED );
 	else
-		m_entryTags->SetForegroundColour( *wxBLACK );
-	
+		SetForegroundColour( *wxBLACK );
+
 	wxArrayString array{};
 	for ( const std::string& s : autoCompleteList )
 		array.Add( s );
-	
+
 	m_autoCompleteListBox->InsertItems( array, 0 );
 
 	m_autoCompletePopup->Fit();
 	m_autoCompletePopup->Show();
-}
-
-void blazon::CreateWindow::OnCreateAndImport( wxCommandEvent& event )
-{
-	blazon::BlazonEntry newEntry( m_entryBlazon->GetValue().ToStdString(), m_entryTags->GetValue().ToStdString(), m_entryDesc->GetValue().ToStdString() );
-	SearchWindow* sw = (SearchWindow*)GetParent();
-	sw->m_blazonDB.createEntry( newEntry );
-	sw->m_blazonDB.cacheEntry( newEntry );
 }

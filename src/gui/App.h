@@ -8,6 +8,23 @@
 
 namespace blazon {
 
+class BlazonTagTextCtrl : public wxTextCtrl
+{
+public:
+	BlazonTagTextCtrl( wxWindow* parent,
+					   wxWindowID id,
+					   const wxString& value = wxEmptyString,
+					   const wxPoint& pos = wxDefaultPosition,
+					   const wxSize& size = wxDefaultSize,
+					   long style = 0,
+					   const wxValidator& validator = wxDefaultValidator,
+					   const wxString& name = wxASCII_STR( wxTextCtrlNameStr ) );
+	void OnTextChanged( wxCommandEvent& event );
+
+	wxPopupTransientWindow* m_autoCompletePopup = nullptr;
+	wxListBox* m_autoCompleteListBox = nullptr;
+};
+
 class CreateWindow : public wxFrame
 {
 public:
@@ -17,11 +34,9 @@ private:
 	wxPanel* m_panel = new wxPanel( this );
 
 	wxTextCtrl* m_entryBlazon = nullptr;
-	wxTextCtrl* m_entryTags = nullptr;
+	BlazonTagTextCtrl* m_entryTags = nullptr;
 	wxTextCtrl* m_entryDesc = nullptr;
-	wxPopupTransientWindow* m_autoCompletePopup = nullptr;
-	wxListBox* m_autoCompleteListBox = nullptr;
-
+	
 	CreateWindow** m_selfPtr;
 
 	void OnClose( wxCloseEvent& event ) {
@@ -30,7 +45,6 @@ private:
 		Destroy();
 	}
 
-	void OnTagTextChanged( wxCommandEvent& event );
 	void OnCreateAndImport( wxCommandEvent& event );
 };
 
@@ -56,7 +70,7 @@ private:
 
 	wxPanel* m_panel = new wxPanel( this );
 	
-	wxTextCtrl* m_searchBar = nullptr;
+	BlazonTagTextCtrl* m_searchBar = nullptr;
 	wxListBox* m_resultListBox = nullptr;
 
 	wxStaticText* m_entryHeader = nullptr;
