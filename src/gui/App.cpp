@@ -250,6 +250,11 @@ void blazon::CreateWindow::OnTagTextChanged( wxCommandEvent& event )
 
 	std::sort( autoCompleteList.begin(), autoCompleteList.end() );
 
+	if ( !blazon::validateTagListString( fulltext ) )
+		m_entryTags->SetForegroundColour( *wxRED );
+	else
+		m_entryTags->SetForegroundColour( *wxBLACK );
+	
 	wxArrayString array{};
 	for ( const std::string& s : autoCompleteList )
 		array.Add( s );

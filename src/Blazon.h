@@ -41,6 +41,9 @@ struct Tag
 	size_t index{ 0 };
 	ModifierBitset modifiersBitset{ 0 };
 	std::vector<uint32_t> tinctureHashes;
+
+	bool hasFaultyIndex = false;
+	bool hasFaultyModifier = false;
 };
 
 struct EntryIndex
@@ -138,6 +141,8 @@ std::filesystem::path getEntryIndexPath();
 std::vector<std::string> getAutocompleteList( const std::string& _string, const std::vector<std::string>& _options );
 std::vector<std::string> getAutocompleteListTag( const std::string& _string );
 std::vector<std::string> getAutocompleteListModifier( const std::string& _string );
+
+bool validateTagListString( const std::string& _tagListStr );
 
 void to_json( nlohmann::json& _json, const blazon::Tag& _p );
 void from_json( const nlohmann::json& _json, blazon::Tag& _p );

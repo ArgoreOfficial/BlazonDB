@@ -201,15 +201,20 @@ size_t blazon::getModifierIndex( const std::string& _modifier )
 blazon::Tag blazon::makeTag( const std::string& _tagName, const std::vector<std::string>& _modifierNames )
 {
 	Tag tag{};
-
+	
+	tag.hasFaultyIndex = true;
 	for ( size_t i = 0; i < CONST_TAGS.size(); i++ )
 	{
 		if ( _tagName != CONST_TAGS[ i ] )
 			continue;
 
 		tag.index = i;
+		tag.hasFaultyIndex = false;
 		break;
 	}
+
+	if ( tag.index == -1 )
+		tag.hasFaultyIndex = true;
 
 	std::vector<std::string> tinctureTags;
 
@@ -226,6 +231,8 @@ blazon::Tag blazon::makeTag( const std::string& _tagName, const std::vector<std:
 
 			if ( index != (size_t)-1 ) // nonexistent modifiers are ignored
 				tag.modifiersBitset.set( index, true );
+			else
+				tag.hasFaultyModifier = true;
 		}
 	}
 
@@ -356,6 +363,25 @@ std::vector<std::string> blazon::getAutocompleteListModifier( const std::string&
 	res.insert( res.end(), t.begin(), t.end() );
 
 	return res;
+}
+
+bool blazon::validateTagListString( const std::string& _tagListStr )
+{
+	std::stringstream sstream( _tagListStr );
+	std::string tempSegment;
+	std::vector<std::string> tagStrings;
+
+	while ( std::getline( sstream, tempSegment, ',' ) )
+		tagStrings.push_back( tempSegment );
+
+	for ( const auto& str : tagStrings )
+	{
+		Tag t = makeTagFromString( str );
+		if ( t.hasFaultyIndex || t.hasFaultyModifier )
+			return false;
+	}
+		
+	return true;
 }
 
 void blazon::to_json( nlohmann::json& _json, const blazon::Tag& _p )
