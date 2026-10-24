@@ -169,23 +169,16 @@ blazon::CreateWindow::CreateWindow( wxWindow* _parent, CreateWindow** _selfPtr )
 	m_entryTags = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_CHARWRAP);
 	m_entryDesc = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_AUTO_URL );
 	
-	m_autocompletePopup = new wxPopupTransientWindow( m_entryTags );
-	wxListBox* autocompleteListbox = new wxListBox( m_autocompletePopup, wxID_ANY );
+	m_autoCompletePopup = new wxPopupTransientWindow( m_entryTags );
+	m_autoCompleteListBox = new wxListBox( m_autoCompletePopup, wxID_ANY );
 	
 	{
 		wxBoxSizer* autoCompleteSizer = new wxBoxSizer( wxVERTICAL );
-		autoCompleteSizer->Add( autocompleteListbox, 1, wxEXPAND );
-		m_autocompletePopup->SetSizer( autoCompleteSizer );
+		autoCompleteSizer->Add( m_autoCompleteListBox, 1, wxEXPAND );
+		m_autoCompletePopup->SetSizer( autoCompleteSizer );
 	}
 
-	wxArrayString array;
-	array.Add( "one" );
-	array.Add( "two" );
-	array.Add( "three" );
-	array.Add( "four" );
-	autocompleteListbox->InsertItems( array, 0 );
-
-	m_autocompletePopup->Hide();
+	m_autoCompletePopup->Hide();
 
 	Bind( wxEVT_TEXT, &CreateWindow::OnTagTextChanged, this, m_entryTags->GetId() );
 
@@ -214,14 +207,51 @@ void blazon::CreateWindow::OnTagTextChanged( wxCommandEvent& event )
 	wxPoint screenPoint = m_entryTags->GetScreenPosition();
 
 	int fontsize = m_entryTags->GetFont().GetPixelSize().y;
-	m_autocompletePopup->SetPosition( 
+	m_autoCompletePopup->SetPosition( 
 		{ 
 			screenPoint.x,
 			point.y + screenPoint.y + fontsize + 2 // magic number alert
 		} );
 
-	m_autocompletePopup->Fit();
-	m_autocompletePopup->Show();
+	std::string fulltext = m_entryTags->GetValue().ToStdString();
+
+	size_t lastTagDiv = fulltext.find_last_of( "," );
+	size_t lastModDiv = fulltext.find_last_of( ":" );
+	std::string display = "";
+
+	const bool isOnTag = lastModDiv == std::string::npos || ( lastTagDiv != std::string::npos && lastTagDiv > lastModDiv );
+	
+	std::vector<std::string> autoCompleteList{ };
+
+	if ( isOnTag )
+	{
+		std::string current = fulltext.substr( lastTagDiv + 1 );
+		autoCompleteList = blazon::getAutocompleteListTag( current );
+	}
+	else
+	{
+		std::string current = fulltext.substr( lastModDiv + 1 );
+		autoCompleteList = blazon::getAutocompleteListModifier( current );
+	}
+
+	m_autoCompleteListBox->Clear();
+
+	if ( autoCompleteList.empty() )
+	{
+		m_autoCompletePopup->Hide();
+		return;
+	}
+
+	std::sort( autoCompleteList.begin(), autoCompleteList.end() );
+
+	wxArrayString array{};
+	for ( const std::string& s : autoCompleteList )
+		array.Add( s );
+	
+	m_autoCompleteListBox->InsertItems( array, 0 );
+
+	m_autoCompletePopup->Fit();
+	m_autoCompletePopup->Show();
 }
 
 void blazon::CreateWindow::OnCreateAndImport( wxCommandEvent& event )

@@ -328,8 +328,11 @@ std::filesystem::path blazon::getEntryIndexPath()
 
 std::vector<std::string> blazon::getAutocompleteList( const std::string& _string, const std::vector<std::string>& _options )
 {
+	if ( _string.empty() )
+		return _options;
+
 	std::vector<std::string> res;
-	for ( auto& t : CONST_TAGS )
+	for ( auto& t : _options )
 	{
 		if ( t.find( _string ) == 0 )
 			res.push_back( t );

@@ -19,7 +19,8 @@ private:
 	wxTextCtrl* m_entryBlazon = nullptr;
 	wxTextCtrl* m_entryTags = nullptr;
 	wxTextCtrl* m_entryDesc = nullptr;
-	wxPopupTransientWindow* m_autocompletePopup = nullptr;
+	wxPopupTransientWindow* m_autoCompletePopup = nullptr;
+	wxListBox* m_autoCompleteListBox = nullptr;
 
 	CreateWindow** m_selfPtr;
 

@@ -17,7 +17,7 @@ const std::vector<std::string> CONST_TAGS{
 	"per_fess",
 	"lion",
 	"bends",
-	"per_fess",
+	"per_bend",
 	"crown"
 };
 
