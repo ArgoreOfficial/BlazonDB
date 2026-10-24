@@ -3,6 +3,8 @@
 #include <wx/srchctrl.h>
 #include <wx/textcompleter.h>
 
+#include <wx/arrstr.h>
+
 blazon::SearchWindow* blazon::g_frame = nullptr;
 
 blazon::SearchWindow::SearchWindow() :
@@ -165,10 +167,14 @@ blazon::CreateWindow::CreateWindow( wxWindow* _parent, CreateWindow** _selfPtr )
 	Bind( wxEVT_CLOSE_WINDOW, &CreateWindow::OnClose, this );
 	m_selfPtr = _selfPtr;
 
+	wxTextValidator tagsValidator( wxFILTER_INCLUDE_CHAR_LIST );
+	tagsValidator.SetCharIncludes( "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890,:_");
+	
 	m_entryBlazon = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
-	m_entryTags = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_CHARWRAP);
+	m_entryTags = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_CHARWRAP, tagsValidator );
 	m_entryDesc = new wxTextCtrl( m_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_AUTO_URL );
 	
+
 	m_autoCompletePopup = new wxPopupTransientWindow( m_entryTags );
 	m_autoCompleteListBox = new wxListBox( m_autoCompletePopup, wxID_ANY );
 	
